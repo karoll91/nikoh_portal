@@ -1,36 +1,54 @@
 <?php
 /**
- * pages/user/register.php - Foydalanuvchi ro'yxatdan o'tish
- * Nikoh Portali
+ * pages/user/register.php - FIXED VERSION (Debug bilan)
+ * Ro'yxatdan o'tish muammosi hal qilingan
  */
+
+// Debug rejimi (keyinchalik o'chirish kerak)
+if (defined('DEVELOPMENT') && DEVELOPMENT) {
+    error_reporting(E_ALL);
+    ini_set('display_errors', 1);
+}
 
 // Agar foydalanuvchi allaqachon kirib olgan bo'lsa
 if ($user) {
-    redirect('user_dashboard');
+    echo '<script>window.location.href = "?page=user_dashboard";</script>';
+    exit;
+}
+
+// Debug: POST ma'lumotlarini ko'rsatish
+if (defined('DEVELOPMENT') && DEVELOPMENT && !empty($_POST)) {
+    echo "<!-- DEBUG: POST data received -->";
 }
 
 // Ro'yxatdan o'tish jarayoni
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
     try {
+        // Debug
+        if (defined('DEVELOPMENT') && DEVELOPMENT) {
+            echo "<!-- DEBUG: Registration process started -->";
+        }
+
         // CSRF token tekshiruvi
-        if (!validateCSRFToken($_POST['csrf_token'] ?? '')) {
+        if (!function_exists('validateCSRFToken') || !validateCSRFToken($_POST['csrf_token'] ?? '')) {
             throw new Exception('Xavfsizlik xatosi. Sahifani yangilang.');
         }
 
+        // Ma'lumotlarni olish va tozalash
         $data = [
-            'passport_series' => sanitize($_POST['passport_series'] ?? ''),
-            'first_name' => sanitize($_POST['first_name'] ?? ''),
-            'last_name' => sanitize($_POST['last_name'] ?? ''),
-            'middle_name' => sanitize($_POST['middle_name'] ?? ''),
-            'birth_date' => sanitize($_POST['birth_date'] ?? ''),
-            'birth_place' => sanitize($_POST['birth_place'] ?? ''),
-            'phone' => sanitize($_POST['phone'] ?? ''),
-            'email' => sanitize($_POST['email'] ?? ''),
+            'passport_series' => function_exists('sanitize') ? sanitize($_POST['passport_series'] ?? '') : trim($_POST['passport_series'] ?? ''),
+            'first_name' => function_exists('sanitize') ? sanitize($_POST['first_name'] ?? '') : trim($_POST['first_name'] ?? ''),
+            'last_name' => function_exists('sanitize') ? sanitize($_POST['last_name'] ?? '') : trim($_POST['last_name'] ?? ''),
+            'middle_name' => function_exists('sanitize') ? sanitize($_POST['middle_name'] ?? '') : trim($_POST['middle_name'] ?? ''),
+            'birth_date' => function_exists('sanitize') ? sanitize($_POST['birth_date'] ?? '') : trim($_POST['birth_date'] ?? ''),
+            'birth_place' => function_exists('sanitize') ? sanitize($_POST['birth_place'] ?? '') : trim($_POST['birth_place'] ?? ''),
+            'phone' => function_exists('sanitize') ? sanitize($_POST['phone'] ?? '') : trim($_POST['phone'] ?? ''),
+            'email' => function_exists('sanitize') ? sanitize($_POST['email'] ?? '') : trim($_POST['email'] ?? ''),
             'password' => $_POST['password'] ?? '',
             'confirm_password' => $_POST['confirm_password'] ?? '',
-            'gender' => sanitize($_POST['gender'] ?? ''),
-            'address' => sanitize($_POST['address'] ?? ''),
-            'citizenship' => sanitize($_POST['citizenship'] ?? 'O\'zbekiston')
+            'gender' => function_exists('sanitize') ? sanitize($_POST['gender'] ?? '') : trim($_POST['gender'] ?? ''),
+            'address' => function_exists('sanitize') ? sanitize($_POST['address'] ?? '') : trim($_POST['address'] ?? ''),
+            'citizenship' => function_exists('sanitize') ? sanitize($_POST['citizenship'] ?? 'O\'zbekiston') : 'O\'zbekiston'
         ];
 
         // Shartlarga rozilik tekshiruvi
@@ -38,15 +56,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
             throw new Exception('Foydalanish shartlariga rozilik berish majburiy');
         }
 
+        // Debug ma'lumotlari
+        if (defined('DEVELOPMENT') && DEVELOPMENT) {
+            echo "<!-- DEBUG: Data collected, validation starting -->";
+        }
+
+        // registerUser funksiyasini tekshirish
+        if (!function_exists('registerUser')) {
+            throw new Exception('Ro\'yxatdan o\'tish funksiyasi mavjud emas. Tizim administratori bilan bog\'laning.');
+        }
+
         // Ro'yxatdan o'tish
         $result = registerUser($data);
 
+        // Debug
+        if (defined('DEVELOPMENT') && DEVELOPMENT) {
+            echo "<!-- DEBUG: Registration successful, user_id: " . $result['user_id'] . " -->";
+        }
+
         $_SESSION['success_message'] = 'Ro\'yxatdan o\'tish muvaffaqiyatli! SMS orqali tasdiqlash kodi yuborildi.';
         $_SESSION['temp_passport'] = $data['passport_series'];
-        redirect('verify_account');
+
+        // JavaScript redirect
+        echo '<script>window.location.href = "?page=login";</script>';
+        echo '<meta http-equiv="refresh" content="0;url=?page=login">';
+        exit;
 
     } catch (Exception $e) {
         $_SESSION['error_message'] = $e->getMessage();
+
+        // Debug
+        if (defined('DEVELOPMENT') && DEVELOPMENT) {
+            error_log('Registration error: ' . $e->getMessage());
+            echo "<!-- DEBUG: Registration error: " . htmlspecialchars($e->getMessage()) . " -->";
+        }
     }
 }
 
@@ -68,8 +111,26 @@ $regions = [
                     <p class="text-muted">Nikoh portalida hisobingizni yarating</p>
                 </div>
 
-                <form method="POST" data-validate="true" autocomplete="on">
-                    <?php echo csrfInput(); ?>
+                <!-- Debug ma'lumotlari (development rejimida) -->
+                <?php if (defined('DEVELOPMENT') && DEVELOPMENT): ?>
+                    <div class="alert alert-info">
+                        <small>
+                            <strong>DEBUG MODE:</strong>
+                            registerUser: <?php echo function_exists('registerUser') ? '✅' : '❌'; ?> |
+                            PDO: <?php echo isset($pdo) ? '✅' : '❌'; ?> |
+                            CSRF: <?php echo function_exists('generateCSRFToken') ? '✅' : '❌'; ?>
+                        </small>
+                    </div>
+                <?php endif; ?>
+
+                <form method="POST" data-validate="true" autocomplete="on" id="registerForm">
+                    <?php
+                    if (function_exists('csrfInput')) {
+                        echo csrfInput();
+                    } else {
+                        echo '<input type="hidden" name="csrf_token" value="' . (session_id() . time()) . '">';
+                    }
+                    ?>
 
                     <!-- Pasport ma'lumotlari -->
                     <div class="card mb-4">
@@ -379,7 +440,7 @@ $regions = [
                     </div>
 
                     <div class="d-grid gap-2 mb-3">
-                        <button type="submit" name="register" class="btn btn-primary btn-lg">
+                        <button type="submit" name="register" class="btn btn-primary btn-lg" id="registerBtn">
                             <i class="fas fa-user-plus me-2"></i>Ro'yxatdan o'tish
                         </button>
                     </div>
@@ -393,6 +454,15 @@ $regions = [
                         </p>
                     </div>
                 </form>
+
+                <!-- Debug tugma (development rejimida) -->
+                <?php if (defined('DEVELOPMENT') && DEVELOPMENT): ?>
+                    <div class="text-center mt-3">
+                        <button onclick="fillDemoData()" class="btn btn-outline-info btn-sm">
+                            🧪 Demo ma'lumotlarni to'ldirish
+                        </button>
+                    </div>
+                <?php endif; ?>
             </div>
         </div>
     </div>
@@ -473,24 +543,122 @@ $regions = [
                 if (age < 18) {
                     this.setCustomValidity('18 yoshdan kichik bo\'lish mumkin emas');
                     this.classList.add('is-invalid');
+                    showError(this, '18 yoshdan kichik bo\'lish mumkin emas');
                 } else {
                     this.setCustomValidity('');
                     this.classList.remove('is-invalid');
                     this.classList.add('is-valid');
+                    hideError(this);
                 }
             });
         }
 
+        // Parol mos kelishini tekshirish
+        const confirmInput = document.getElementById('confirm_password');
+        if (confirmInput && passwordInput) {
+            function checkPasswordMatch() {
+                if (confirmInput.value && passwordInput.value) {
+                    if (confirmInput.value !== passwordInput.value) {
+                        confirmInput.setCustomValidity('Parollar mos kelmaydi');
+                        confirmInput.classList.add('is-invalid');
+                        showError(confirmInput, 'Parollar mos kelmaydi');
+                    } else {
+                        confirmInput.setCustomValidity('');
+                        confirmInput.classList.remove('is-invalid');
+                        confirmInput.classList.add('is-valid');
+                        hideError(confirmInput);
+                    }
+                }
+            }
+
+            confirmInput.addEventListener('input', checkPasswordMatch);
+            passwordInput.addEventListener('input', checkPasswordMatch);
+        }
+
         // Form submit
-        const form = document.querySelector('form[data-validate="true"]');
+        const form = document.getElementById('registerForm');
+        const submitBtn = document.getElementById('registerBtn');
+
         if (form) {
             form.addEventListener('submit', function(e) {
-                const submitBtn = form.querySelector('button[type="submit"]');
+                // Final validation
+                let isValid = true;
+                const requiredFields = form.querySelectorAll('input[required], select[required], textarea[required]');
+
+                requiredFields.forEach(function(field) {
+                    if (!field.value.trim()) {
+                        showError(field, 'Bu maydon majburiy');
+                        isValid = false;
+                    }
+                });
+
+                // Terms checkbox
+                const termsCheckbox = document.getElementById('terms_agree');
+                if (!termsCheckbox.checked) {
+                    alert('Foydalanish shartlariga rozilik berish majburiy');
+                    termsCheckbox.focus();
+                    isValid = false;
+                }
+
+                if (!isValid) {
+                    e.preventDefault();
+                    return false;
+                }
+
+                // Loading state
                 if (submitBtn) {
                     submitBtn.disabled = true;
                     submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Ro\'yxatdan o\'tkazilmoqda...';
                 }
+
+                // Debug log
+                <?php if (defined('DEVELOPMENT') && DEVELOPMENT): ?>
+                console.log('Form submitted with validation passed');
+                <?php endif; ?>
             });
         }
     });
+
+    // Helper functions
+    function showError(input, message) {
+        input.classList.add('is-invalid');
+        let feedback = input.parentNode.querySelector('.invalid-feedback');
+        if (!feedback) {
+            feedback = input.closest('.form-group')?.querySelector('.invalid-feedback');
+        }
+        if (feedback) {
+            feedback.textContent = message;
+        }
+    }
+
+    function hideError(input) {
+        input.classList.remove('is-invalid');
+        input.classList.add('is-valid');
+        let feedback = input.parentNode.querySelector('.invalid-feedback');
+        if (!feedback) {
+            feedback = input.closest('.form-group')?.querySelector('.invalid-feedback');
+        }
+        if (feedback) {
+            feedback.textContent = '';
+        }
+    }
+
+    <?php if (defined('DEVELOPMENT') && DEVELOPMENT): ?>
+    // Demo ma'lumotlarni to'ldirish (faqat development)
+    function fillDemoData() {
+        document.getElementById('passport_series').value = 'AA' + Math.floor(Math.random() * 9000000 + 1000000);
+        document.getElementById('first_name').value = 'Test';
+        document.getElementById('last_name').value = 'User';
+        document.getElementById('middle_name').value = 'Testovich';
+        document.getElementById('birth_date').value = '1990-01-01';
+        document.getElementById('birth_place').value = 'Toshkent shahri';
+        document.getElementById('phone').value = '+998901234567';
+        document.getElementById('email').value = 'test@example.com';
+        document.getElementById('password').value = '123456';
+        document.getElementById('confirm_password').value = '123456';
+        document.getElementById('gender').value = 'erkak';
+        document.getElementById('address').value = 'Toshkent, Test manzil';
+        document.getElementById('terms_agree').checked = true;
+    }
+    <?php endif; ?>
 </script>

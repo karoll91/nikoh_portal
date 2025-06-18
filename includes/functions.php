@@ -1,7 +1,7 @@
 <?php
 /**
- * includes/functions.php - Yangilangan umumiy funksiyalar
- * getUserByVerificationToken funksiyasi qo'shildi
+ * includes/functions.php - FIXED VERSION (Header muammosiz)
+ * Barcha header() redirect'lar olib tashlangan
  */
 
 if (!defined('CONFIG_LOADED')) {
@@ -201,10 +201,11 @@ function createUrl($page, $params = []) {
     return $url;
 }
 
-// Redirect funksiyasi
+// Redirect funksiyasi (JavaScript orqali, header() o'rniga)
 function redirect($page, $params = []) {
     $url = createUrl($page, $params);
-    header('Location: ' . $url);
+    echo '<script>window.location.href = "' . $url . '";</script>';
+    echo '<meta http-equiv="refresh" content="0;url=' . $url . '">';
     exit;
 }
 

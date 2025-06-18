@@ -1,7 +1,7 @@
 <?php
 /**
- * includes/auth.php - Yakuniy tozalangan autentifikatsiya fayli
- * Barcha funksiya duplikatlarini olib tashlangan versiya
+ * includes/auth.php - FIXED VERSION (Headers muammosiz)
+ * Barcha header() funksiyalari olib tashlangan, JavaScript redirect ishlatiladi
  */
 
 if (!defined('CONFIG_LOADED')) {
@@ -87,6 +87,7 @@ function loginUser($passport, $password, $remember = false) {
             $token = generateToken();
             $expires = time() + (30 * 24 * 60 * 60); // 30 kun
 
+            // Cookie o'rnatish (output buffer ichida)
             setcookie('remember_token', $token, $expires, '/', '', isset($_SERVER['HTTPS']), true);
 
             // Tokenni ma'lumotlar bazasiga saqlash
@@ -267,7 +268,7 @@ function logout() {
     // Session tozalash
     $_SESSION = [];
 
-    // Session cookie ni o'chirish
+    // Session cookie ni o'chirish (output buffer ichida)
     if (isset($_COOKIE[session_name()])) {
         setcookie(session_name(), '', time() - 3600, '/');
     }
@@ -369,26 +370,26 @@ function hasPermission($required_role) {
     return $user_level >= $required_level;
 }
 
-// Foydalanuvchi login tekshiruvi
+// Foydalanuvchi login tekshiruvi (redirect yo'q)
 function requireLogin() {
     if (!isset($_SESSION['user_id'])) {
-        header('Location: ?page=login');
-        exit;
+        return false; // index.php da JavaScript redirect ishlatiladi
     }
+    return true;
 }
 
-// Admin login tekshiruvi
+// Admin login tekshiruvi (redirect yo'q)
 function requireAdminLogin($required_role = 'operator') {
     if (!isset($_SESSION['admin_id'])) {
-        header('Location: ?page=admin_login');
-        exit;
+        return false; // index.php da JavaScript redirect ishlatiladi
     }
 
     if (!hasPermission($required_role)) {
         $_SESSION['error_message'] = 'Bu sahifani ko\'rish uchun ruxsatingiz yo\'q';
-        header('Location: ?page=admin_dashboard');
-        exit;
+        return false;
     }
+
+    return true;
 }
 
 // Session avtomatik uzaytirish

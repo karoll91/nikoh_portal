@@ -244,66 +244,103 @@ try {
         <!-- O'ng panel -->
         <div class="col-lg-4">
             <!-- Oylik statistika -->
-            <div class="feature-card mb-4">
-                <h5 class="mb-3">6 oylik statistika</h5>
-                <?php if (!empty($monthly_stats)): ?>
-                    <div class="chart-container" style="height: 200px;">
-                        <!-- Oddiy bar chart -->
-                        <?php foreach (array_slice($monthly_stats, 0, 6) as $stat): ?>
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <span><?php echo $stat['month']; ?>/<?php echo $stat['year']; ?></span>
-                                <div class="d-flex align-items-center">
-                                    <div class="progress me-2" style="width: 80px; height: 8px;">
-                                        <div class="progress-bar"
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white border-bottom">
+                    <h6 class="card-title mb-0">
+                        <i class="fas fa-chart-line me-2 text-success"></i>6 oylik trend
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <?php if (!empty($monthly_stats)): ?>
+                        <?php foreach ($monthly_stats as $stat): ?>
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <div>
+                                    <div class="fw-semibold">
+                                        <?php echo $month_names[$stat['month']] ?? $stat['month']; ?> <?php echo $stat['year']; ?>
+                                    </div>
+                                    <small class="text-muted">
+                                        Nikoh: <?php echo $stat['marriages']; ?> • Ajralish: <?php echo $stat['divorces']; ?>
+                                    </small>
+                                </div>
+                                <div class="text-end">
+                                    <div class="fw-bold text-primary"><?php echo $stat['total']; ?></div>
+                                    <div class="progress" style="width: 60px; height: 4px;">
+                                        <div class="progress-bar bg-primary"
                                              style="width: <?php echo min(100, ($stat['total'] / max(1, max(array_column($monthly_stats, 'total')))) * 100); ?>%"></div>
                                     </div>
-                                    <span class="badge bg-primary"><?php echo $stat['total']; ?></span>
                                 </div>
                             </div>
                         <?php endforeach; ?>
-                    </div>
-                <?php else: ?>
-                    <p class="text-muted">Ma'lumot yo'q</p>
-                <?php endif; ?>
+                    <?php else: ?>
+                        <div class="text-center py-3">
+                            <i class="fas fa-chart-line fa-2x text-muted mb-2"></i>
+                            <p class="text-muted small mb-0">Ma'lumot yo'q</p>
+                        </div>
+                    <?php endif; ?>
+                </div>
             </div>
 
             <!-- Tizim holati -->
-            <div class="feature-card mb-4">
-                <h5 class="mb-3">Tizim holati</h5>
-                <div class="list-group list-group-flush">
-                    <div class="list-group-item border-0 px-0 d-flex justify-content-between">
-                        <span>Ma'lumotlar bazasi</span>
-                        <span class="badge bg-success">Ishlayapti</span>
-                    </div>
-                    <div class="list-group-item border-0 px-0 d-flex justify-content-between">
-                        <span>To'lov tizimi</span>
-                        <span class="badge bg-success">Faol</span>
-                    </div>
-                    <div class="list-group-item border-0 px-0 d-flex justify-content-between">
-                        <span>SMS xizmati</span>
-                        <span class="badge bg-warning">Tekshirilmoqda</span>
-                    </div>
-                    <div class="list-group-item border-0 px-0 d-flex justify-content-between">
-                        <span>Email xizmati</span>
-                        <span class="badge bg-success">Faol</span>
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white border-bottom">
+                    <h6 class="card-title mb-0">
+                        <i class="fas fa-server me-2 text-info"></i>Tizim holati
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush">
+                        <div class="list-group-item border-0 px-0 d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-database text-success me-2"></i>
+                                <span class="small">Ma'lumotlar bazasi</span>
+                            </div>
+                            <span class="badge bg-success">Faol</span>
+                        </div>
+                        <div class="list-group-item border-0 px-0 d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-credit-card text-success me-2"></i>
+                                <span class="small">To'lov tizimi</span>
+                            </div>
+                            <span class="badge bg-success">Ishlaydi</span>
+                        </div>
+                        <div class="list-group-item border-0 px-0 d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-sms text-warning me-2"></i>
+                                <span class="small">SMS xizmati</span>
+                            </div>
+                            <span class="badge bg-warning">Tekshirilmoqda</span>
+                        </div>
+                        <div class="list-group-item border-0 px-0 d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-envelope text-success me-2"></i>
+                                <span class="small">Email xizmati</span>
+                            </div>
+                            <span class="badge bg-success">Faol</span>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <!-- Admin harakatlar -->
             <?php if ($admin['role'] === 'admin'): ?>
-                <div class="feature-card">
-                    <h5 class="mb-3">Administrator</h5>
-                    <div class="d-grid gap-2">
-                        <a href="?page=sozlamalar" class="btn btn-outline-secondary">
-                            <i class="fas fa-cog me-2"></i>Sozlamalar
-                        </a>
-                        <a href="?page=backup" class="btn btn-outline-info">
-                            <i class="fas fa-database me-2"></i>Zaxira nusxa
-                        </a>
-                        <a href="?page=logs" class="btn btn-outline-warning">
-                            <i class="fas fa-file-alt me-2"></i>Loglar
-                        </a>
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white border-bottom">
+                        <h6 class="card-title mb-0">
+                            <i class="fas fa-cog me-2 text-secondary"></i>Administrator
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <a href="?page=sozlamalar" class="btn btn-outline-secondary btn-sm">
+                                <i class="fas fa-cog me-2"></i>Sozlamalar
+                            </a>
+                            <a href="?page=backup" class="btn btn-outline-info btn-sm">
+                                <i class="fas fa-database me-2"></i>Zaxira nusxa
+                            </a>
+                            <a href="?page=logs" class="btn btn-outline-warning btn-sm">
+                                <i class="fas fa-file-alt me-2"></i>Tizim loglar
+                            </a>
+                        </div>
                     </div>
                 </div>
             <?php endif; ?>
