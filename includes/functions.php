@@ -1,7 +1,7 @@
 <?php
 /**
- * includes/functions.php - Umumiy funksiyalar
- * Nikoh Portali
+ * includes/functions.php - Yangilangan umumiy funksiyalar
+ * getUserByVerificationToken funksiyasi qo'shildi
  */
 
 if (!defined('CONFIG_LOADED')) {
@@ -26,16 +26,6 @@ function sanitizeForDb($data) {
 // Token yaratish
 function generateToken($length = 32) {
     return bin2hex(random_bytes($length));
-}
-
-// Xavfsiz random string yaratish
-function generateRandomString($length = 10) {
-    $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    $randomString = '';
-    for ($i = 0; $i < $length; $i++) {
-        $randomString .= $characters[rand(0, strlen($characters) - 1)];
-    }
-    return $randomString;
 }
 
 // Parol hashlash
@@ -69,32 +59,86 @@ function csrfInput() {
 
 // Foydalanuvchini ID bo'yicha olish
 function getUserById($id) {
-    $sql = "SELECT * FROM users WHERE id = ? AND is_verified = 1";
-    return fetchOne($sql, [$id]);
+    global $pdo;
+    try {
+        $sql = "SELECT * FROM users WHERE id = ? AND is_verified = 1";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([$id]);
+        return $stmt->fetch();
+    } catch (PDOException $e) {
+        error_log('getUserById error: ' . $e->getMessage());
+        return false;
+    }
 }
 
 // Foydalanuvchini pasport bo'yicha olish
 function getUserByPassport($passport) {
-    $sql = "SELECT * FROM users WHERE passport_series = ?";
-    return fetchOne($sql, [$passport]);
+    global $pdo;
+    try {
+        $sql = "SELECT * FROM users WHERE passport_series = ?";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([$passport]);
+        return $stmt->fetch();
+    } catch (PDOException $e) {
+        error_log('getUserByPassport error: ' . $e->getMessage());
+        return false;
+    }
+}
+
+// Foydalanuvchini verification token bo'yicha olish
+function getUserByVerificationToken($token) {
+    global $pdo;
+    try {
+        $sql = "SELECT * FROM users WHERE verification_token = ? AND is_verified = 1";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([$token]);
+        return $stmt->fetch();
+    } catch (PDOException $e) {
+        error_log('getUserByVerificationToken error: ' . $e->getMessage());
+        return false;
+    }
 }
 
 // Foydalanuvchini telefon bo'yicha olish
 function getUserByPhone($phone) {
-    $sql = "SELECT * FROM users WHERE phone = ?";
-    return fetchOne($sql, [$phone]);
+    global $pdo;
+    try {
+        $sql = "SELECT * FROM users WHERE phone = ?";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([$phone]);
+        return $stmt->fetch();
+    } catch (PDOException $e) {
+        error_log('getUserByPhone error: ' . $e->getMessage());
+        return false;
+    }
 }
 
 // Admin foydalanuvchini ID bo'yicha olish
 function getAdminById($id) {
-    $sql = "SELECT * FROM admin_users WHERE id = ? AND is_active = 1";
-    return fetchOne($sql, [$id]);
+    global $pdo;
+    try {
+        $sql = "SELECT * FROM admin_users WHERE id = ? AND is_active = 1";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([$id]);
+        return $stmt->fetch();
+    } catch (PDOException $e) {
+        error_log('getAdminById error: ' . $e->getMessage());
+        return false;
+    }
 }
 
 // Admin foydalanuvchini username bo'yicha olish
 function getAdminByUsername($username) {
-    $sql = "SELECT * FROM admin_users WHERE username = ? AND is_active = 1";
-    return fetchOne($sql, [$username]);
+    global $pdo;
+    try {
+        $sql = "SELECT * FROM admin_users WHERE username = ? AND is_active = 1";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([$username]);
+        return $stmt->fetch();
+    } catch (PDOException $e) {
+        error_log('getAdminByUsername error: ' . $e->getMessage());
+        return false;
+    }
 }
 
 // Foydalanuvchi tizimda borligini tekshirish
@@ -211,7 +255,8 @@ function uploadFile($file, $directory = 'documents/', $allowed_types = null) {
         throw new Exception('Fayl yuklanmadi yoki xatolik yuz berdi');
     }
 
-    $allowed_types = $allowed_types ?: ALLOWED_FILE_TYPES;
+    // Allowed types ni olish (config dan)
+    $allowed_types = $allowed_types ?: getAllowedFileTypes();
     $file_extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
 
     if (!in_array($file_extension, $allowed_types)) {
@@ -227,7 +272,8 @@ function uploadFile($file, $directory = 'documents/', $allowed_types = null) {
     $mime_type = finfo_file($finfo, $file['tmp_name']);
     finfo_close($finfo);
 
-    if (!in_array($mime_type, ALLOWED_MIME_TYPES)) {
+    $allowed_mime_types = getAllowedMimeTypes();
+    if (!in_array($mime_type, $allowed_mime_types)) {
         throw new Exception('Fayl MIME turi noto\'g\'ri');
     }
 
@@ -277,11 +323,17 @@ function formatFileSize($bytes) {
 // Ariza raqamini yaratish
 function generateApplicationNumber() {
     $year = date('Y');
-    $sql = "SELECT COUNT(*) as count FROM applications WHERE YEAR(created_at) = ?";
-    $result = fetchOne($sql, [$year]);
-    $next_number = ($result['count'] ?? 0) + 1;
-
-    return $year . str_pad($next_number, 6, '0', STR_PAD_LEFT);
+    global $pdo;
+    try {
+        $sql = "SELECT COUNT(*) as count FROM applications WHERE YEAR(created_at) = ?";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([$year]);
+        $result = $stmt->fetch();
+        $next_number = ($result['count'] ?? 0) + 1;
+        return $year . str_pad($next_number, 6, '0', STR_PAD_LEFT);
+    } catch (Exception $e) {
+        return $year . str_pad(1, 6, '0', STR_PAD_LEFT);
+    }
 }
 
 // Ariza statusini olish
@@ -327,70 +379,85 @@ function formatMoney($amount) {
 
 // SMS yuborish
 function sendSMS($phone, $message) {
-    // SMS API bilan integratsiya
-    // Bu yerda real SMS provider bilan bog'lanish kodi bo'lishi kerak
+    global $pdo;
+    try {
+        // SMS API bilan integratsiya
+        // Bu yerda real SMS provider bilan bog'lanish kodi bo'lishi kerak
 
-    // Hozircha faqat ma'lumotlar bazasiga yozamiz
-    $sql = "INSERT INTO notifications (notification_type, recipient, message, status) VALUES (?, ?, ?, ?)";
-    executeQuery($sql, ['sms', $phone, $message, 'kutilmoqda']);
+        // Hozircha faqat ma'lumotlar bazasiga yozamiz
+        $sql = "INSERT INTO notifications (notification_type, recipient, message, status) VALUES (?, ?, ?, ?)";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute(['sms', $phone, $message, 'kutilmoqda']);
 
-    // Log yozish
-    logActivity('sms_sent', null, null, [
-        'phone' => $phone,
-        'message_length' => strlen($message)
-    ]);
-
-    return true;
+        return true;
+    } catch (Exception $e) {
+        error_log('SMS send error: ' . $e->getMessage());
+        return false;
+    }
 }
 
 // Email yuborish
 function sendEmail($email, $subject, $message, $is_html = true) {
-    // Email yuborish kodi
-    // Bu yerda PHPMailer yoki boshqa email library ishlatish mumkin
+    global $pdo;
+    try {
+        // Email yuborish kodi
+        // Bu yerda PHPMailer yoki boshqa email library ishlatish mumkin
 
-    // Hozircha faqat ma'lumotlar bazasiga yozamiz
-    $sql = "INSERT INTO notifications (notification_type, recipient, subject, message, status) VALUES (?, ?, ?, ?, ?)";
-    executeQuery($sql, ['email', $email, $subject, $message, 'kutilmoqda']);
+        // Hozircha faqat ma'lumotlar bazasiga yozamiz
+        $sql = "INSERT INTO notifications (notification_type, recipient, subject, message, status) VALUES (?, ?, ?, ?, ?)";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute(['email', $email, $subject, $message, 'kutilmoqda']);
 
-    return true;
+        return true;
+    } catch (Exception $e) {
+        error_log('Email send error: ' . $e->getMessage());
+        return false;
+    }
 }
 
 // Xabarnoma yuborish (universal)
 function sendNotification($user_id, $type, $recipient, $message, $subject = null) {
-    $sql = "INSERT INTO notifications (user_id, notification_type, recipient, subject, message, status) 
-            VALUES (?, ?, ?, ?, ?, 'kutilmoqda')";
+    global $pdo;
+    try {
+        $sql = "INSERT INTO notifications (user_id, notification_type, recipient, subject, message, status) 
+                VALUES (?, ?, ?, ?, ?, 'kutilmoqda')";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([$user_id, $type, $recipient, $subject, $message]);
 
-    executeQuery($sql, [$user_id, $type, $recipient, $subject, $message]);
-
-    // Real vaqtda yuborish (background job yoki queue orqali)
-    // processNotificationQueue();
-
-    return true;
+        return true;
+    } catch (Exception $e) {
+        error_log('Notification send error: ' . $e->getMessage());
+        return false;
+    }
 }
 
 // === LOG FUNKSIYALARI ===
 
 // Faoliyat logini yozish
 function logActivity($action, $user_id = null, $admin_id = null, $details = []) {
-    $sql = "INSERT INTO system_logs (user_id, admin_id, action, table_name, record_id, new_values, ip_address, user_agent) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-
-    $params = [
-        $user_id,
-        $admin_id,
-        $action,
-        $details['table_name'] ?? null,
-        $details['record_id'] ?? null,
-        isset($details['data']) ? json_encode($details['data'], JSON_UNESCAPED_UNICODE) : null,
-        $_SERVER['REMOTE_ADDR'] ?? null,
-        $_SERVER['HTTP_USER_AGENT'] ?? null
-    ];
-
+    global $pdo;
     try {
-        executeQuery($sql, $params);
+        $sql = "INSERT INTO system_logs (user_id, admin_id, action, table_name, record_id, new_values, ip_address, user_agent) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+
+        $params = [
+            $user_id,
+            $admin_id,
+            $action,
+            $details['table_name'] ?? null,
+            $details['record_id'] ?? null,
+            isset($details['data']) ? json_encode($details['data'], JSON_UNESCAPED_UNICODE) : null,
+            $_SERVER['REMOTE_ADDR'] ?? null,
+            $_SERVER['HTTP_USER_AGENT'] ?? null
+        ];
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($params);
+        return true;
     } catch (Exception $e) {
         // Log yozishda xatolik bo'lsa, faylga yozish
         error_log('Log write error: ' . $e->getMessage());
+        return false;
     }
 }
 
@@ -406,31 +473,6 @@ function writeLog($message, $level = 'INFO', $file = 'app.log') {
     $log_entry = "[{$timestamp}] [{$level}] [IP:{$ip}] [User:{$user_id}] {$message}" . PHP_EOL;
 
     file_put_contents($log_file, $log_entry, FILE_APPEND | LOCK_EX);
-
-    // Log fayl hajmini tekshirish
-    if (file_exists($log_file) && filesize($log_file) > LOG_MAX_SIZE) {
-        rotateLogFile($log_file);
-    }
-}
-
-// Log faylni aylantirish
-function rotateLogFile($log_file) {
-    $backup_file = $log_file . '.' . date('Y-m-d-H-i-s');
-    rename($log_file, $backup_file);
-
-    // Eski log fayllarni o'chirish
-    $log_dir = dirname($log_file);
-    $files = glob($log_dir . '/*.log.*');
-    if (count($files) > LOG_MAX_FILES) {
-        usort($files, function($a, $b) {
-            return filemtime($a) - filemtime($b);
-        });
-
-        $files_to_delete = array_slice($files, 0, count($files) - LOG_MAX_FILES);
-        foreach ($files_to_delete as $file) {
-            unlink($file);
-        }
-    }
 }
 
 // === SOZLAMALAR FUNKSIYALARI ===
@@ -438,11 +480,18 @@ function rotateLogFile($log_file) {
 // Sozlamani olish
 function getSetting($key, $default = null) {
     static $settings_cache = [];
+    global $pdo;
 
     if (!isset($settings_cache[$key])) {
-        $sql = "SELECT setting_value FROM settings WHERE setting_key = ?";
-        $result = fetchOne($sql, [$key]);
-        $settings_cache[$key] = $result ? $result['setting_value'] : $default;
+        try {
+            $sql = "SELECT setting_value FROM settings WHERE setting_key = ?";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute([$key]);
+            $result = $stmt->fetch();
+            $settings_cache[$key] = $result ? $result['setting_value'] : $default;
+        } catch (Exception $e) {
+            $settings_cache[$key] = $default;
+        }
     }
 
     return $settings_cache[$key];
@@ -450,17 +499,25 @@ function getSetting($key, $default = null) {
 
 // Sozlamani o'rnatish
 function setSetting($key, $value, $admin_id = null) {
-    $sql = "INSERT INTO settings (setting_key, setting_value, updated_by) 
-            VALUES (?, ?, ?) 
-            ON DUPLICATE KEY UPDATE 
-            setting_value = VALUES(setting_value), 
-            updated_by = VALUES(updated_by),
-            updated_at = NOW()";
+    global $pdo;
+    try {
+        $sql = "INSERT INTO settings (setting_key, setting_value, updated_by) 
+                VALUES (?, ?, ?) 
+                ON DUPLICATE KEY UPDATE 
+                setting_value = VALUES(setting_value), 
+                updated_by = VALUES(updated_by),
+                updated_at = NOW()";
 
-    executeQuery($sql, [$key, $value, $admin_id]);
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([$key, $value, $admin_id]);
 
-    // Cache tozalash
-    unset($GLOBALS['settings_cache'][$key]);
+        // Cache tozalash
+        unset($GLOBALS['settings_cache'][$key]);
+        return true;
+    } catch (Exception $e) {
+        error_log('setSetting error: ' . $e->getMessage());
+        return false;
+    }
 }
 
 // === FORMAT FUNKSIYALARI ===
@@ -558,39 +615,6 @@ function clearCache($pattern = '*') {
     }
 }
 
-// === DEBUG FUNKSIYALARI ===
-
-// Debug ma'lumot chiqarish
-function debug($data, $label = null) {
-    if (!DEBUG_MODE) return;
-
-    echo '<div style="background: #f8f9fa; border: 1px solid #dee2e6; padding: 15px; margin: 10px 0; border-radius: 5px;">';
-    if ($label) {
-        echo '<strong>' . htmlspecialchars($label) . ':</strong><br>';
-    }
-    echo '<pre style="margin: 0;">';
-    print_r($data);
-    echo '</pre>';
-    echo '</div>';
-}
-
-// Vaqt o'lchash boshlash
-function startTimer($name = 'default') {
-    $GLOBALS['timers'][$name] = microtime(true);
-}
-
-// Vaqt o'lchash tugatish
-function endTimer($name = 'default') {
-    if (!isset($GLOBALS['timers'][$name])) {
-        return 0;
-    }
-
-    $elapsed = microtime(true) - $GLOBALS['timers'][$name];
-    unset($GLOBALS['timers'][$name]);
-
-    return round($elapsed * 1000, 2); // millisekund
-}
-
 // === HELPER FUNKSIYALAR ===
 
 // Array dan biror qiymatni xavfsiz olish
@@ -605,11 +629,6 @@ function truncateString($string, $length = 100, $suffix = '...') {
     }
 
     return substr($string, 0, $length) . $suffix;
-}
-
-// Random rang yaratish
-function generateRandomColor() {
-    return sprintf('#%06X', mt_rand(0, 0xFFFFFF));
 }
 
 // IP manzilni olish

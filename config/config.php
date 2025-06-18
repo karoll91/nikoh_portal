@@ -1,7 +1,6 @@
 <?php
 /**
- * config/config.php - Asosiy konfiguratsiya fayli
- * Nikoh Portali - O'zbekiston Respublikasi FHDY tizimi
+ * config/config.php - Konstantalar muammosini hal qilgan versiya
  */
 
 // Xavfsizlik uchun konstanta
@@ -9,9 +8,16 @@ if (!defined('CONFIG_LOADED')) {
     define('CONFIG_LOADED', true);
 }
 
+// === MA'LUMOTLAR BAZASI SOZLAMALARI (AVVAL) ===
+require_once __DIR__ . '/database.php';
+
 // === MUHIT SOZLAMALARI ===
-define('DEVELOPMENT', true); // Production da false qiling!
-define('DEBUG_MODE', DEVELOPMENT);
+if (!defined('DEVELOPMENT')) {
+    define('DEVELOPMENT', true); // Production da false qiling!
+}
+if (!defined('DEBUG_MODE')) {
+    define('DEBUG_MODE', DEVELOPMENT);
+}
 
 // Xatoliklarni ko'rsatish (faqat development)
 if (DEVELOPMENT) {
@@ -25,52 +31,109 @@ if (DEVELOPMENT) {
 }
 
 // === ASOSIY SAYT SOZLAMALARI ===
-define('SITE_NAME', 'Nikoh Portali');
-define('SITE_DESCRIPTION', 'O\'zbekiston Respublikasi FHDY - Nikoh va ajralish uchun onlayn portal');
-define('SITE_KEYWORDS', 'nikoh, ajralish, FHDY, O\'zbekiston, fuqarolik holati, guvohnoma');
-define('SITE_AUTHOR', 'O\'zbekiston Respublikasi Adliya vazirligi');
+if (!defined('SITE_NAME')) {
+    define('SITE_NAME', 'Nikoh Portali');
+}
+if (!defined('SITE_DESCRIPTION')) {
+    define('SITE_DESCRIPTION', 'O\'zbekiston Respublikasi FHDY - Nikoh va ajralish uchun onlayn portal');
+}
+if (!defined('SITE_KEYWORDS')) {
+    define('SITE_KEYWORDS', 'nikoh, ajralish, FHDY, O\'zbekiston, fuqarolik holati, guvohnoma');
+}
+if (!defined('SITE_AUTHOR')) {
+    define('SITE_AUTHOR', 'O\'zbekiston Respublikasi Adliya vazirligi');
+}
 
-// URL sozlamalari (o'zgartirishingiz kerak)
-define('SITE_URL', 'http://localhost/nikoh_portal');
-define('SITE_PATH', '/nikoh_portal');
-define('ADMIN_URL', SITE_URL . '/admin');
+// URL sozlamalari - SIZNING LOYIHANGIZ UCHUN TO'G'RI
+if (!defined('SITE_URL')) {
+    define('SITE_URL', 'http://localhost');
+}
+if (!defined('SITE_PATH')) {
+    define('SITE_PATH', '/');
+}
+if (!defined('ADMIN_URL')) {
+    define('ADMIN_URL', SITE_URL . '/admin');
+}
 
 // Bog'lanish ma'lumotlari
-define('SITE_EMAIL', 'info@nikoh.uz');
-define('ADMIN_EMAIL', 'admin@nikoh.uz');
-define('SUPPORT_EMAIL', 'support@nikoh.uz');
-define('SITE_PHONE', '+998 71 123-45-67');
+if (!defined('SITE_EMAIL')) {
+    define('SITE_EMAIL', 'info@nikoh.uz');
+}
+if (!defined('ADMIN_EMAIL')) {
+    define('ADMIN_EMAIL', 'admin@nikoh.uz');
+}
+if (!defined('SUPPORT_EMAIL')) {
+    define('SUPPORT_EMAIL', 'support@nikoh.uz');
+}
+if (!defined('SITE_PHONE')) {
+    define('SITE_PHONE', '+998 71 123-45-67');
+}
 
 // === XAVFSIZLIK SOZLAMALARI ===
-define('SECRET_KEY', 'your-super-secret-key-change-this-32-chars'); // O'zgartirishingiz SHART!
-define('ENCRYPTION_KEY', 'your-encryption-key-must-be-32-chars-long'); // O'zgartirishingiz SHART!
-define('HASH_ALGORITHM', 'sha256');
-define('PASSWORD_MIN_LENGTH', 6);
+if (!defined('SECRET_KEY')) {
+    define('SECRET_KEY', 'your-super-secret-key-change-this-32-chars');
+}
+if (!defined('ENCRYPTION_KEY')) {
+    define('ENCRYPTION_KEY', 'your-encryption-key-must-be-32-chars-long');
+}
+if (!defined('HASH_ALGORITHM')) {
+    define('HASH_ALGORITHM', 'sha256');
+}
+if (!defined('PASSWORD_MIN_LENGTH')) {
+    define('PASSWORD_MIN_LENGTH', 6);
+}
 
 // Session sozlamalari
-define('SESSION_LIFETIME', 1800); // 30 daqiqa
-define('SESSION_NAME', 'NIKOH_PORTAL_SESSION');
-define('REMEMBER_TOKEN_LIFETIME', 2592000); // 30 kun
+if (!defined('SESSION_LIFETIME')) {
+    define('SESSION_LIFETIME', 1800); // 30 daqiqa
+}
+if (!defined('SESSION_NAME')) {
+    define('SESSION_NAME', 'NIKOH_PORTAL_SESSION');
+}
+if (!defined('REMEMBER_TOKEN_LIFETIME')) {
+    define('REMEMBER_TOKEN_LIFETIME', 2592000); // 30 kun
+}
 
-// Session xavfsizligi
-ini_set('session.name', SESSION_NAME);
-ini_set('session.cookie_lifetime', 0);
-ini_set('session.cookie_httponly', 1);
-ini_set('session.cookie_secure', isset($_SERVER['HTTPS']) ? 1 : 0);
-ini_set('session.use_strict_mode', 1);
-ini_set('session.cookie_samesite', 'Strict');
+// Session xavfsizligi - faqat session boshlanmagan bo'lsa
+if (session_status() === PHP_SESSION_NONE) {
+    ini_set('session.name', SESSION_NAME);
+    ini_set('session.cookie_lifetime', 0);
+    ini_set('session.cookie_httponly', 1);
+    ini_set('session.cookie_secure', isset($_SERVER['HTTPS']) ? 1 : 0);
+    ini_set('session.use_strict_mode', 1);
+    ini_set('session.cookie_samesite', 'Strict');
+}
 
 // === FAYL YUKLASH SOZLAMALARI ===
-define('UPLOAD_PATH', __DIR__ . '/../uploads/');
-define('UPLOAD_URL', SITE_URL . '/uploads/');
-define('MAX_FILE_SIZE', 5 * 1024 * 1024); // 5MB
-define('ALLOWED_FILE_TYPES', ['jpg', 'jpeg', 'png', 'pdf']);
-define('ALLOWED_MIME_TYPES', [
-    'image/jpeg',
-    'image/jpg',
-    'image/png',
-    'application/pdf'
-]);
+if (!defined('UPLOAD_PATH')) {
+    define('UPLOAD_PATH', __DIR__ . '/../uploads/');
+}
+if (!defined('UPLOAD_URL')) {
+    define('UPLOAD_URL', SITE_URL . '/uploads/');
+}
+if (!defined('MAX_FILE_SIZE')) {
+    define('MAX_FILE_SIZE', 5 * 1024 * 1024); // 5MB
+}
+if (!defined('ALLOWED_FILE_TYPES')) {
+    define('ALLOWED_FILE_TYPES', serialize(['jpg', 'jpeg', 'png', 'pdf']));
+}
+if (!defined('ALLOWED_MIME_TYPES')) {
+    define('ALLOWED_MIME_TYPES', serialize([
+        'image/jpeg',
+        'image/jpg',
+        'image/png',
+        'application/pdf'
+    ]));
+}
+
+// Array konstantalarini function sifatida ishlatish
+function getAllowedFileTypes() {
+    return unserialize(ALLOWED_FILE_TYPES);
+}
+
+function getAllowedMimeTypes() {
+    return unserialize(ALLOWED_MIME_TYPES);
+}
 
 // Upload papkalarini yaratish
 $upload_dirs = [
@@ -90,61 +153,93 @@ foreach ($upload_dirs as $dir) {
 }
 
 // === TO'LOV TIZIMI SOZLAMALARI ===
+if (!defined('CLICK_MERCHANT_ID')) {
+    define('CLICK_MERCHANT_ID', 'your_click_merchant_id');
+}
+if (!defined('CLICK_SECRET_KEY')) {
+    define('CLICK_SECRET_KEY', 'your_click_secret_key');
+}
+if (!defined('CLICK_API_URL')) {
+    define('CLICK_API_URL', 'https://api.click.uz/v2/merchant');
+}
 
-// Click to'lov tizimi
-define('CLICK_MERCHANT_ID', 'your_click_merchant_id'); // O'zgartirishingiz kerak
-define('CLICK_SECRET_KEY', 'your_click_secret_key'); // O'zgartirishingiz kerak
-define('CLICK_API_URL', 'https://api.click.uz/v2/merchant');
-
-// Payme to'lov tizimi
-define('PAYME_MERCHANT_ID', 'your_payme_merchant_id'); // O'zgartirishingiz kerak
-define('PAYME_SECRET_KEY', 'your_payme_secret_key'); // O'zgartirishingiz kerak
-define('PAYME_API_URL', 'https://checkout.paycom.uz/api');
-
-// UzCard to'lov tizimi
-define('UZCARD_MERCHANT_ID', 'your_uzcard_merchant_id');
-define('UZCARD_SECRET_KEY', 'your_uzcard_secret_key');
+if (!defined('PAYME_MERCHANT_ID')) {
+    define('PAYME_MERCHANT_ID', 'your_payme_merchant_id');
+}
+if (!defined('PAYME_SECRET_KEY')) {
+    define('PAYME_SECRET_KEY', 'your_payme_secret_key');
+}
+if (!defined('PAYME_API_URL')) {
+    define('PAYME_API_URL', 'https://checkout.paycom.uz/api');
+}
 
 // To'lov miqdorlari (so'm)
-define('NIKOH_DAVLAT_BOJI', 51000); // Nikoh uchun davlat boji
-define('AJRALISH_DAVLAT_BOJI', 85000); // Ajralish uchun davlat boji
-define('BHM_MIQDORI', 340000); // Bazaviy hisoblash miqdori
-define('GERB_YIGIMI_FOIZ', 15); // Gerb yig'imi foizi
+if (!defined('NIKOH_DAVLAT_BOJI')) {
+    define('NIKOH_DAVLAT_BOJI', 51000);
+}
+if (!defined('AJRALISH_DAVLAT_BOJI')) {
+    define('AJRALISH_DAVLAT_BOJI', 85000);
+}
+if (!defined('BHM_MIQDORI')) {
+    define('BHM_MIQDORI', 340000);
+}
+if (!defined('GERB_YIGIMI_FOIZ')) {
+    define('GERB_YIGIMI_FOIZ', 15);
+}
 
 // === SMS XABARNOMA SOZLAMALARI ===
-define('SMS_PROVIDER', 'playmobile'); // playmobile, smsclub, eskiz
-define('SMS_LOGIN', 'your_sms_login'); // O'zgartirishingiz kerak
-define('SMS_PASSWORD', 'your_sms_password'); // O'zgartirishingiz kerak
-define('SMS_API_URL', 'https://send.smsxabar.uz/broker-api/send');
-define('SMS_SENDER', 'NIKOH.UZ');
+if (!defined('SMS_PROVIDER')) {
+    define('SMS_PROVIDER', 'playmobile');
+}
+if (!defined('SMS_LOGIN')) {
+    define('SMS_LOGIN', 'your_sms_login');
+}
+if (!defined('SMS_PASSWORD')) {
+    define('SMS_PASSWORD', 'your_sms_password');
+}
+if (!defined('SMS_API_URL')) {
+    define('SMS_API_URL', 'https://send.smsxabar.uz/broker-api/send');
+}
+if (!defined('SMS_SENDER')) {
+    define('SMS_SENDER', 'NIKOH.UZ');
+}
 
 // === EMAIL SOZLAMALARI ===
-define('MAIL_HOST', 'smtp.gmail.com');
-define('MAIL_PORT', 587);
-define('MAIL_USERNAME', 'your_email@gmail.com'); // O'zgartirishingiz kerak
-define('MAIL_PASSWORD', 'your_app_password'); // O'zgartirishingiz kerak
-define('MAIL_ENCRYPTION', 'tls');
-define('MAIL_FROM_NAME', SITE_NAME);
-define('MAIL_FROM_EMAIL', SITE_EMAIL);
+if (!defined('MAIL_HOST')) {
+    define('MAIL_HOST', 'smtp.gmail.com');
+}
+if (!defined('MAIL_PORT')) {
+    define('MAIL_PORT', 587);
+}
+if (!defined('MAIL_USERNAME')) {
+    define('MAIL_USERNAME', 'your_email@gmail.com');
+}
+if (!defined('MAIL_PASSWORD')) {
+    define('MAIL_PASSWORD', 'your_app_password');
+}
 
 // === VAQT SOZLAMALARI ===
 date_default_timezone_set('Asia/Tashkent');
-define('TIMEZONE', 'Asia/Tashkent');
-define('DATE_FORMAT', 'd.m.Y');
-define('DATETIME_FORMAT', 'd.m.Y H:i');
-define('TIME_FORMAT', 'H:i');
-
-// Ish vaqti sozlamalari
-define('WORK_DAYS', [1, 2, 3, 4, 5]); // Dushanba-Juma
-define('WORK_START_TIME', '09:00');
-define('WORK_END_TIME', '18:00');
-define('LUNCH_START_TIME', '12:00');
-define('LUNCH_END_TIME', '13:00');
+if (!defined('TIMEZONE')) {
+    define('TIMEZONE', 'Asia/Tashkent');
+}
+if (!defined('DATE_FORMAT')) {
+    define('DATE_FORMAT', 'd.m.Y');
+}
+if (!defined('DATETIME_FORMAT')) {
+    define('DATETIME_FORMAT', 'd.m.Y H:i');
+}
 
 // === CACHE SOZLAMALARI ===
-define('CACHE_ENABLED', true);
-define('CACHE_LIFETIME', 3600); // 1 soat
-define('CACHE_PATH', __DIR__ . '/../cache/');
+if (!defined('CACHE_ENABLED')) {
+    define('CACHE_ENABLED', true);
+}
+if (!defined('CACHE_LIFETIME')) {
+    define('CACHE_LIFETIME', 3600);
+}
+if (!defined('CACHE_PATH')) {
+    define('CACHE_PATH', __DIR__ . '/../cache/');
+}
 
 // Cache papkasini yaratish
 if (!is_dir(CACHE_PATH)) {
@@ -152,72 +247,58 @@ if (!is_dir(CACHE_PATH)) {
 }
 
 // === LOG SOZLAMALARI ===
-define('LOG_ENABLED', true);
-define('LOG_PATH', __DIR__ . '/../logs/');
-define('LOG_MAX_SIZE', 10 * 1024 * 1024); // 10MB
-define('LOG_MAX_FILES', 30); // 30 ta fayl
+if (!defined('LOG_ENABLED')) {
+    define('LOG_ENABLED', true);
+}
+if (!defined('LOG_PATH')) {
+    define('LOG_PATH', __DIR__ . '/../logs/');
+}
+if (!defined('LOG_MAX_SIZE')) {
+    define('LOG_MAX_SIZE', 10 * 1024 * 1024);
+}
 
 // Log papkasini yaratish
 if (!is_dir(LOG_PATH)) {
     mkdir(LOG_PATH, 0755, true);
 }
 
-// === API SOZLAMALARI ===
-define('API_ENABLED', true);
-define('API_VERSION', 'v1');
-define('API_RATE_LIMIT', 100); // Soatiga so'rovlar soni
-define('API_KEY_LENGTH', 32);
-
 // === TIZIM SOZLAMALARI ===
-define('PAGINATION_LIMIT', 20); // Sahifalash uchun
-define('SEARCH_MIN_LENGTH', 3); // Qidiruv uchun minimal uzunlik
-define('AUTO_LOGOUT_TIME', 1800); // 30 daqiqa faolsizlikdan keyin
-define('MAX_LOGIN_ATTEMPTS', 5); // Maksimal kirish urinishlari
-define('LOGIN_BLOCK_TIME', 900); // 15 daqiqa bloklash
+if (!defined('PAGINATION_LIMIT')) {
+    define('PAGINATION_LIMIT', 20);
+}
+if (!defined('SEARCH_MIN_LENGTH')) {
+    define('SEARCH_MIN_LENGTH', 3);
+}
+if (!defined('AUTO_LOGOUT_TIME')) {
+    define('AUTO_LOGOUT_TIME', 1800);
+}
+if (!defined('MAX_LOGIN_ATTEMPTS')) {
+    define('MAX_LOGIN_ATTEMPTS', 5);
+}
 
 // === QONUNIY SOZLAMALAR ===
-
-// Nikoh uchun minimal yosh
-define('MIN_MARRIAGE_AGE_MALE', 18);
-define('MIN_MARRIAGE_AGE_FEMALE', 17);
-
-// Nikoh oldin kutish muddati (kunlar)
-define('MARRIAGE_WAITING_PERIOD', 30);
-
-// Hujjat saqlash muddati (yillar)
-define('DOCUMENT_RETENTION_PERIOD', 75);
-
-// Guvohnoma raqam formatlari
-define('MARRIAGE_CERT_PREFIX', 'N');
-define('DIVORCE_CERT_PREFIX', 'A');
-define('CERT_NUMBER_LENGTH', 7);
-
-// === INTEGRATSIYA SOZLAMALARI ===
-
-// MyGov integratsiyasi
-define('MYGOV_API_URL', 'https://api.my.gov.uz');
-define('MYGOV_CLIENT_ID', 'your_mygov_client_id');
-define('MYGOV_CLIENT_SECRET', 'your_mygov_client_secret');
-
-// E-IMZO integratsiyasi
-define('EIMZO_ENABLED', false);
-define('EIMZO_API_URL', 'https://eimzo.uz/api');
+if (!defined('MIN_MARRIAGE_AGE_MALE')) {
+    define('MIN_MARRIAGE_AGE_MALE', 18);
+}
+if (!defined('MIN_MARRIAGE_AGE_FEMALE')) {
+    define('MIN_MARRIAGE_AGE_FEMALE', 17);
+}
+if (!defined('MARRIAGE_WAITING_PERIOD')) {
+    define('MARRIAGE_WAITING_PERIOD', 30);
+}
 
 // === BACKUP SOZLAMALARI ===
-define('BACKUP_ENABLED', true);
-define('BACKUP_PATH', __DIR__ . '/../backups/');
-define('BACKUP_SCHEDULE', 'daily'); // daily, weekly, monthly
-define('BACKUP_RETENTION_DAYS', 30);
+if (!defined('BACKUP_ENABLED')) {
+    define('BACKUP_ENABLED', true);
+}
+if (!defined('BACKUP_PATH')) {
+    define('BACKUP_PATH', __DIR__ . '/../backups/');
+}
 
 // Backup papkasini yaratish
 if (!is_dir(BACKUP_PATH)) {
     mkdir(BACKUP_PATH, 0755, true);
 }
-
-// === MONITORING SOZLAMALARI ===
-define('MONITORING_ENABLED', true);
-define('HEALTH_CHECK_URL', SITE_URL . '/api/health');
-define('UPTIME_CHECK_INTERVAL', 300); // 5 daqiqa
 
 // === SOZLAMALAR MASSIVI ===
 $config = [
@@ -228,9 +309,9 @@ $config = [
         'debug' => DEBUG_MODE
     ],
     'database' => [
-        'host' => DB_HOST ?? 'localhost',
-        'name' => DB_NAME ?? 'nikoh_portal',
-        'charset' => DB_CHARSET ?? 'utf8mb4'
+        'host' => DB_HOST,
+        'name' => DB_NAME,
+        'charset' => DB_CHARSET
     ],
     'security' => [
         'secret_key' => SECRET_KEY,
@@ -240,7 +321,7 @@ $config = [
     'upload' => [
         'path' => UPLOAD_PATH,
         'max_size' => MAX_FILE_SIZE,
-        'allowed_types' => ALLOWED_FILE_TYPES
+        'allowed_types' => getAllowedFileTypes()
     ],
     'payment' => [
         'bhm_amount' => BHM_MIQDORI,
@@ -273,22 +354,6 @@ function getConfig($key, $default = null) {
     return $value;
 }
 
-// Konfiguratsiya qiymatini o'rnatish
-function setConfig($key, $value) {
-    global $config;
-    $keys = explode('.', $key);
-    $current = &$config;
-
-    foreach ($keys as $k) {
-        if (!isset($current[$k]) || !is_array($current[$k])) {
-            $current[$k] = [];
-        }
-        $current = &$current[$k];
-    }
-
-    $current = $value;
-}
-
 // URL yaratish
 function url($path = '') {
     return SITE_URL . '/' . ltrim($path, '/');
@@ -312,42 +377,32 @@ spl_autoload_register(function ($class) {
     }
 });
 
-// === MUHIT OZGARUVCHILARI ===
-$env_file = __DIR__ . '/../.env';
-if (file_exists($env_file)) {
-    $env_lines = file($env_file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-    foreach ($env_lines as $line) {
-        if (strpos($line, '=') !== false && strpos($line, '#') !== 0) {
-            list($key, $value) = explode('=', $line, 2);
-            $_ENV[trim($key)] = trim($value, '"\'');
-        }
-    }
-}
-
 // === XAVFSIZLIK TEKSHIRUVLARI ===
+// Faqat headers yuborilmagan bo'lsa
+if (!headers_sent()) {
+    // HTTPS majburlash (production)
+    if (!DEVELOPMENT && !isset($_SERVER['HTTPS'])) {
+        $redirect_url = 'https://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
+        header('Location: ' . $redirect_url, true, 301);
+        exit;
+    }
 
-// HTTPS majburlash (production)
-if (!DEVELOPMENT && !isset($_SERVER['HTTPS'])) {
-    $redirect_url = 'https://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
-    header('Location: ' . $redirect_url, true, 301);
-    exit;
-}
+    // X-Frame-Options (clickjacking himoyasi)
+    header('X-Frame-Options: SAMEORIGIN');
 
-// X-Frame-Options (clickjacking himoyasi)
-header('X-Frame-Options: SAMEORIGIN');
+    // XSS himoyasi
+    header('X-XSS-Protection: 1; mode=block');
 
-// XSS himoyasi
-header('X-XSS-Protection: 1; mode=block');
+    // Content-Type himoyasi
+    header('X-Content-Type-Options: nosniff');
 
-// Content-Type himoyasi
-header('X-Content-Type-Options: nosniff');
+    // Referrer Policy
+    header('Referrer-Policy: strict-origin-when-cross-origin');
 
-// Referrer Policy
-header('Referrer-Policy: strict-origin-when-cross-origin');
-
-// CSP (Content Security Policy) - development uchun yumshoq
-if (!DEVELOPMENT) {
-    header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; img-src 'self' data: https:; font-src 'self' https://cdnjs.cloudflare.com;");
+    // CSP (Content Security Policy) - development uchun yumshoq
+    if (!DEVELOPMENT) {
+        header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; img-src 'self' data: https:; font-src 'self' https://cdnjs.cloudflare.com;");
+    }
 }
 
 ?>

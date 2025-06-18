@@ -4,7 +4,10 @@
  * O'zbekiston Respublikasi FHDY tizimi
  */
 
-session_start();
+// Avval session ni boshlash (muhim!)
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 // Xatoliklarni ko'rsatish (development uchun)
 error_reporting(E_ALL);
@@ -12,7 +15,7 @@ ini_set('display_errors', 1);
 
 // Asosiy konfiguratsiyani yuklash
 require_once 'config/config.php';
-require_once 'config/database.php';
+// Database config allaqachon config.php ichida require qilingan
 require_once 'includes/functions.php';
 
 // URL routing - qaysi sahifa ko'rsatilishi kerak
@@ -77,7 +80,7 @@ if (isset($_SESSION['admin_id'])) {
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container">
             <a class="navbar-brand" href="index.php">
-                <img src="assets/images/gerb.png" alt="O'zbekiston gerbi" width="40" height="40" class="me-2">
+                <i class="fas fa-rings-wedding"></i>
                 <strong>Nikoh Portali</strong>
             </a>
 
@@ -350,7 +353,7 @@ if (isset($_SESSION['admin_id'])) {
 <!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 <!-- Custom JS -->
-<script src="assets/js/main.js"></script>
+<script src="assets/js/script.js"></script>
 
 <!-- Online/Offline holat indikatori -->
 <div id="connection-status" class="position-fixed bottom-0 end-0 m-3" style="z-index: 1050;"></div>

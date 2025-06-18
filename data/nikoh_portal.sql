@@ -258,3 +258,6 @@ BEGIN
     SET NEW.application_number = CONCAT(YEAR(NOW()), LPAD(next_number, 6, '0'));
 END//
 DELIMITER ;
+
+INSERT INTO admin_users (username, password_hash, full_name, position, fhdy_organ, phone, email, role, is_active)
+VALUES ('admin', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Admin User', 'Administrator', 'FHDY', '+998901234567', 'admin@nikoh.uz', 'admin', 1);
