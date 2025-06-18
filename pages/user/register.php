@@ -1,4 +1,4 @@
-<?php
+<?php global $user;
 /**
  * Oddiy ro'yxatdan o'tish sahifasi
  */

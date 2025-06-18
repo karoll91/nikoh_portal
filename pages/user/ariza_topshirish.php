@@ -1,4 +1,4 @@
-<?php
+<?php global $user;
 /**
  * Oddiy ariza topshirish
  */
