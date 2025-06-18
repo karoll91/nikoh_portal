@@ -13,7 +13,7 @@ if (!defined('CONFIG_LOADED')) {
 define('DB_HOST', 'localhost');
 define('DB_NAME', 'nikoh_portal');
 define('DB_USER', 'root'); // O'zgartirishingiz kerak
-define('DB_PASS', ''); // O'zgartirishingiz kerak
+define('DB_PASS', '12345'); // O'zgartirishingiz kerak
 define('DB_CHARSET', 'utf8mb4');
 
 // PDO sozlamalari
