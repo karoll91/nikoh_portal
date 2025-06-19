@@ -1,18 +1,13 @@
 <?php
 /**
- * config/database.php - Ma'lumotlar bazasi sozlamalari
- * Nikoh Portali
+ * config/database.php - TUZATILGAN VERSIYA
+ * Ma'lumotlar bazasi sozlamalari va funksiyalar
  */
-
-// Xavfsizlik tekshiruvi
-if (!defined('CONFIG_LOADED')) {
-    die('Access denied - Config not loaded');
-}
 
 // Ma'lumotlar bazasi sozlamalari
 define('DB_HOST', 'localhost');
 define('DB_NAME', 'nikoh_portal');
-define('DB_USER', 'root'); // O'zgartirishingiz kerak
+define('DB_USER', 'root');
 define('DB_PASS', '12345'); // O'zgartirishingiz kerak
 define('DB_CHARSET', 'utf8mb4');
 
@@ -36,49 +31,64 @@ try {
     // Xatolikni log qilish
     error_log('Database connection error: ' . $e->getMessage());
 
-    // Production va development uchun turli xabarlar
-    if (defined('DEVELOPMENT') && DEVELOPMENT) {
-        die('Ma\'lumotlar bazasiga ulanishda xatolik: ' . $e->getMessage());
-    } else {
-        // Production da foydalanuvchiga texnik ma'lumot bermaslik
-        die('<!DOCTYPE html>
-<html lang="uz">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tizim xatoligi</title>
-    <style>
-        body { font-family: Arial, sans-serif; text-align: center; margin-top: 100px; }
-        .error-container { max-width: 500px; margin: 0 auto; }
-        .error-icon { font-size: 64px; color: #dc3545; margin-bottom: 20px; }
-        .error-title { color: #dc3545; margin-bottom: 20px; }
-        .error-message { color: #6c757d; margin-bottom: 30px; }
-        .btn { background: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; }
-    </style>
-</head>
-<body>
-    <div class="error-container">
-        <div class="error-icon">⚠️</div>
-        <h2 class="error-title">Tizimda texnik xatolik</h2>
-        <p class="error-message">
-            Hozirda tizim texnik ishlar olib borilmoqda. 
-            Iltimos, keyinroq qayta urinib ko\'ring.
-        </p>
-        <a href="/" class="btn">Bosh sahifaga qaytish</a>
-    </div>
-</body>
-</html>');
-    }
+    // Xatolik sahifasini ko'rsatish
+    die('
+    <!DOCTYPE html>
+    <html lang="uz">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Ma\'lumotlar bazasi xatoligi</title>
+        <style>
+            body { font-family: Arial, sans-serif; text-align: center; margin-top: 100px; background-color: #f8f9fa; }
+            .error-container { max-width: 500px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 0 20px rgba(0,0,0,0.1); }
+            .error-icon { font-size: 64px; color: #dc3545; margin-bottom: 20px; }
+            .error-title { color: #dc3545; margin-bottom: 20px; }
+            .error-message { color: #6c757d; margin-bottom: 30px; }
+            .btn { background: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; }
+        </style>
+    </head>
+    <body>
+        <div class="error-container">
+            <div class="error-icon">⚠️</div>
+            <h2 class="error-title">Ma\'lumotlar bazasiga ulanishda xatolik</h2>
+            <p class="error-message">
+                Iltimos, konfiguratsiyani tekshiring yoki administrator bilan bog\'laning.
+            </p>
+            <a href="/" class="btn">Bosh sahifaga qaytish</a>
+        </div>
+    </body>
+    </html>');
 }
 
 /**
  * Ma'lumotlar bazasi bilan ishlash funksiyalari
  */
 
-// PDO connection olish
-function getDbConnection() {
+// Bitta yozuvni olish
+function fetchOne($sql, $params = []) {
     global $pdo;
-    return $pdo;
+    try {
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetch();
+    } catch (PDOException $e) {
+        error_log('fetchOne error: ' . $e->getMessage() . ' | SQL: ' . $sql);
+        return false;
+    }
+}
+
+// Barcha yozuvlarni olish
+function fetchAll($sql, $params = []) {
+    global $pdo;
+    try {
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll();
+    } catch (PDOException $e) {
+        error_log('fetchAll error: ' . $e->getMessage() . ' | SQL: ' . $sql);
+        return [];
+    }
 }
 
 // SQL so'rovni bajarish
@@ -89,223 +99,238 @@ function executeQuery($sql, $params = []) {
         $stmt->execute($params);
         return $stmt;
     } catch (PDOException $e) {
-        error_log('SQL Error: ' . $e->getMessage() . ' | SQL: ' . $sql);
+        error_log('executeQuery error: ' . $e->getMessage() . ' | SQL: ' . $sql);
         throw new Exception('Ma\'lumotlar bazasida xatolik yuz berdi');
     }
 }
 
-// Bitta yozuvni olish
-function fetchOne($sql, $params = []) {
-    $stmt = executeQuery($sql, $params);
-    return $stmt->fetch();
-}
-
-// Barcha yozuvlarni olish
-function fetchAll($sql, $params = []) {
-    $stmt = executeQuery($sql, $params);
-    return $stmt->fetchAll();
-}
-
-// Oxirgi qo'shilgan ID ni olish
-function getLastInsertId() {
-    global $pdo;
-    return $pdo->lastInsertId();
-}
-
-// Yozuvlar sonini olish
-function getRowCount($sql, $params = []) {
-    $stmt = executeQuery($sql, $params);
-    return $stmt->rowCount();
-}
-
 // INSERT so'rovi
 function insertRecord($table, $data) {
-    $columns = implode(', ', array_keys($data));
-    $placeholders = ':' . implode(', :', array_keys($data));
+    global $pdo;
+    try {
+        $columns = implode(', ', array_keys($data));
+        $placeholders = ':' . implode(', :', array_keys($data));
 
-    $sql = "INSERT INTO {$table} ({$columns}) VALUES ({$placeholders})";
-    executeQuery($sql, $data);
+        $sql = "INSERT INTO {$table} ({$columns}) VALUES ({$placeholders})";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($data);
 
-    return getLastInsertId();
+        return $pdo->lastInsertId();
+    } catch (PDOException $e) {
+        error_log('insertRecord error: ' . $e->getMessage() . ' | Table: ' . $table);
+        throw new Exception('Ma\'lumot qo\'shishda xatolik yuz berdi');
+    }
 }
 
 // UPDATE so'rovi
 function updateRecord($table, $data, $where, $whereParams = []) {
-    $setParts = [];
-    foreach (array_keys($data) as $column) {
-        $setParts[] = "{$column} = :{$column}";
+    global $pdo;
+    try {
+        $setParts = [];
+        foreach (array_keys($data) as $column) {
+            $setParts[] = "{$column} = :{$column}";
+        }
+        $setClause = implode(', ', $setParts);
+
+        $sql = "UPDATE {$table} SET {$setClause} WHERE {$where}";
+        $params = array_merge($data, $whereParams);
+
+        $stmt = $pdo->prepare($sql);
+        return $stmt->execute($params);
+    } catch (PDOException $e) {
+        error_log('updateRecord error: ' . $e->getMessage() . ' | Table: ' . $table);
+        throw new Exception('Ma\'lumot yangilashda xatolik yuz berdi');
     }
-    $setClause = implode(', ', $setParts);
-
-    $sql = "UPDATE {$table} SET {$setClause} WHERE {$where}";
-    $params = array_merge($data, $whereParams);
-
-    return executeQuery($sql, $params);
 }
 
 // DELETE so'rovi
 function deleteRecord($table, $where, $params = []) {
-    $sql = "DELETE FROM {$table} WHERE {$where}";
-    return executeQuery($sql, $params);
-}
-
-// Tranzaksiya boshlash
-function beginTransaction() {
     global $pdo;
-    return $pdo->beginTransaction();
-}
-
-// Tranzaksiyani tasdiqlash
-function commitTransaction() {
-    global $pdo;
-    return $pdo->commit();
-}
-
-// Tranzaksiyani bekor qilish
-function rollbackTransaction() {
-    global $pdo;
-    return $pdo->rollback();
-}
-
-// Ma'lumotlar bazasi mavjudligini tekshirish
-function checkDatabaseExists() {
     try {
-        global $pdo;
-        $stmt = $pdo->query("SELECT 1");
-        return true;
+        $sql = "DELETE FROM {$table} WHERE {$where}";
+        $stmt = $pdo->prepare($sql);
+        return $stmt->execute($params);
     } catch (PDOException $e) {
+        error_log('deleteRecord error: ' . $e->getMessage() . ' | Table: ' . $table);
+        throw new Exception('Ma\'lumot o\'chirishda xatolik yuz berdi');
+    }
+}
+
+// Foydalanuvchini ID bo'yicha olish
+function getUserById($id) {
+    global $pdo;
+    try {
+        $sql = "SELECT * FROM users WHERE id = ? AND is_verified = 1";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([$id]);
+        return $stmt->fetch();
+    } catch (PDOException $e) {
+        error_log('getUserById error: ' . $e->getMessage());
         return false;
     }
 }
 
-// Jadval mavjudligini tekshirish
-function checkTableExists($tableName) {
+// Foydalanuvchini pasport bo'yicha olish
+function getUserByPassport($passport) {
+    global $pdo;
     try {
-        $sql = "SHOW TABLES LIKE ?";
-        $result = fetchOne($sql, [$tableName]);
-        return !empty($result);
-    } catch (Exception $e) {
+        $sql = "SELECT * FROM users WHERE passport_series = ?";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([$passport]);
+        return $stmt->fetch();
+    } catch (PDOException $e) {
+        error_log('getUserByPassport error: ' . $e->getMessage());
         return false;
     }
 }
 
-// Ma'lumotlar bazasi versiyasini olish
-function getDatabaseVersion() {
+// Admin foydalanuvchini ID bo'yicha olish
+function getAdminById($id) {
+    global $pdo;
     try {
-        global $pdo;
-        $stmt = $pdo->query("SELECT VERSION() as version");
-        $result = $stmt->fetch();
-        return $result['version'] ?? 'Unknown';
-    } catch (Exception $e) {
-        return 'Unknown';
+        $sql = "SELECT * FROM admin_users WHERE id = ? AND is_active = 1";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([$id]);
+        return $stmt->fetch();
+    } catch (PDOException $e) {
+        error_log('getAdminById error: ' . $e->getMessage());
+        return false;
     }
 }
 
-// Connection holatini tekshirish
+// Admin foydalanuvchini username bo'yicha olish
+function getAdminByUsername($username) {
+    global $pdo;
+    try {
+        $sql = "SELECT * FROM admin_users WHERE username = ? AND is_active = 1";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([$username]);
+        return $stmt->fetch();
+    } catch (PDOException $e) {
+        error_log('getAdminByUsername error: ' . $e->getMessage());
+        return false;
+    }
+}
+
+// Ariza statusini olish
+function getApplicationStatus($status) {
+    $statuses = [
+        'yangi' => ['label' => 'Yangi', 'class' => 'status-yangi', 'icon' => 'fa-file'],
+        'korib_chiqilmoqda' => ['label' => 'Ko\'rib chiqilmoqda', 'class' => 'status-korib-chiqilmoqda', 'icon' => 'fa-eye'],
+        'qoshimcha_hujjat_kerak' => ['label' => 'Qo\'shimcha hujjat kerak', 'class' => 'status-warning', 'icon' => 'fa-exclamation-triangle'],
+        'tasdiqlandi' => ['label' => 'Tasdiqlandi', 'class' => 'status-tasdiqlandi', 'icon' => 'fa-check'],
+        'rad_etildi' => ['label' => 'Rad etildi', 'class' => 'status-rad-etildi', 'icon' => 'fa-times'],
+        'tugallandi' => ['label' => 'Tugallandi', 'class' => 'status-tugallandi', 'icon' => 'fa-flag-checkered']
+    ];
+
+    return $statuses[$status] ?? ['label' => $status, 'class' => 'badge-secondary', 'icon' => 'fa-question'];
+}
+
+// Ariza turini olish
+function getApplicationType($type) {
+    $types = [
+        'nikoh' => ['label' => 'Nikoh', 'icon' => 'fa-heart', 'color' => 'success'],
+        'ajralish' => ['label' => 'Ajralish', 'icon' => 'fa-handshake-slash', 'color' => 'warning']
+    ];
+
+    return $types[$type] ?? ['label' => $type, 'icon' => 'fa-file', 'color' => 'secondary'];
+}
+
+// To'lov miqdorini hisoblash
+function calculatePaymentAmount($application_type) {
+    $base_amount = ($application_type === 'nikoh') ? NIKOH_DAVLAT_BOJI : AJRALISH_DAVLAT_BOJI;
+    $gerb_yigimi = (BHM_MIQDORI * GERB_YIGIMI_FOIZ) / 100;
+
+    return $base_amount + $gerb_yigimi;
+}
+
+// Log yozish
+function logActivity($action, $user_id = null, $admin_id = null, $details = []) {
+    global $pdo;
+    try {
+        $sql = "INSERT INTO system_logs (user_id, admin_id, action, new_values, ip_address, user_agent, created_at) 
+                VALUES (?, ?, ?, ?, ?, ?, NOW())";
+
+        $params = [
+            $user_id,
+            $admin_id,
+            $action,
+            isset($details['data']) ? json_encode($details['data'], JSON_UNESCAPED_UNICODE) : null,
+            getRealIP(),
+            getUserAgent()
+        ];
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($params);
+        return true;
+    } catch (Exception $e) {
+        error_log('Log write error: ' . $e->getMessage());
+        return false;
+    }
+}
+
+// Xabarnoma yuborish
+function sendNotification($user_id, $type, $recipient, $message, $subject = null) {
+    global $pdo;
+    try {
+        $sql = "INSERT INTO notifications (user_id, notification_type, recipient, subject, message, status, created_at) 
+                VALUES (?, ?, ?, ?, ?, 'kutilmoqda', NOW())";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([$user_id, $type, $recipient, $subject, $message]);
+
+        return true;
+    } catch (Exception $e) {
+        error_log('Notification send error: ' . $e->getMessage());
+        return false;
+    }
+}
+
+// Admin login funksiyasi
+function loginAdmin($username, $password) {
+    global $pdo;
+
+    try {
+        $admin = getAdminByUsername($username);
+
+        if (!$admin) {
+            throw new Exception('Foydalanuvchi nomi yoki parol noto\'g\'ri');
+        }
+
+        if (!password_verify($password, $admin['password_hash'])) {
+            throw new Exception('Foydalanuvchi nomi yoki parol noto\'g\'ri');
+        }
+
+        // Session yaratish
+        session_regenerate_id(true);
+        $_SESSION['admin_id'] = $admin['id'];
+        $_SESSION['admin_username'] = $admin['username'];
+        $_SESSION['admin_name'] = $admin['full_name'];
+        $_SESSION['admin_role'] = $admin['role'];
+        $_SESSION['admin_login_time'] = time();
+
+        // Oxirgi kirish vaqtini yangilash
+        $sql = "UPDATE admin_users SET last_login = NOW() WHERE id = ?";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([$admin['id']]);
+
+        logActivity('admin_login', null, $admin['id'], ['username' => $username]);
+
+        return $admin;
+
+    } catch (Exception $e) {
+        error_log('Admin login error: ' . $e->getMessage());
+        throw $e;
+    }
+}
+
+// Ma'lumotlar bazasi connection-ni tekshirish
 function checkConnection() {
+    global $pdo;
     try {
-        global $pdo;
         $stmt = $pdo->query("SELECT 1");
         return true;
     } catch (Exception $e) {
         return false;
-    }
-}
-
-// Debug uchun so'nggi SQL xatoliklarni olish
-function getLastError() {
-    global $pdo;
-    $errorInfo = $pdo->errorInfo();
-    return $errorInfo[2] ?? 'No error';
-}
-
-// Ma'lumotlar bazasi statistikasi
-function getDatabaseStats() {
-    try {
-        $stats = [];
-
-        // Jadvallar soni
-        $result = fetchAll("SHOW TABLES");
-        $stats['tables_count'] = count($result);
-
-        // Ma'lumotlar bazasi hajmi
-        $sql = "SELECT 
-                    ROUND(SUM(data_length + index_length) / 1024 / 1024, 2) AS size_mb
-                FROM information_schema.tables 
-                WHERE table_schema = ?";
-        $result = fetchOne($sql, [DB_NAME]);
-        $stats['size_mb'] = $result['size_mb'] ?? 0;
-
-        // Foydalanuvchilar soni
-        $stats['users_count'] = fetchOne("SELECT COUNT(*) as count FROM users")['count'] ?? 0;
-
-        // Arizalar soni
-        $stats['applications_count'] = fetchOne("SELECT COUNT(*) as count FROM applications")['count'] ?? 0;
-
-        return $stats;
-
-    } catch (Exception $e) {
-        return [
-            'tables_count' => 0,
-            'size_mb' => 0,
-            'users_count' => 0,
-            'applications_count' => 0
-        ];
-    }
-}
-
-// Backup yaratish (oddiy)
-function createSimpleBackup($backupDir = 'backups/') {
-    try {
-        if (!is_dir($backupDir)) {
-            mkdir($backupDir, 0755, true);
-        }
-
-        $filename = $backupDir . 'backup_' . date('Y-m-d_H-i-s') . '.sql';
-
-        // mysqldump buyrug'i (agar mavjud bo'lsa)
-        $command = sprintf(
-            'mysqldump --host=%s --user=%s --password=%s %s > %s',
-            escapeshellarg(DB_HOST),
-            escapeshellarg(DB_USER),
-            escapeshellarg(DB_PASS),
-            escapeshellarg(DB_NAME),
-            escapeshellarg($filename)
-        );
-
-        exec($command, $output, $returnVar);
-
-        if ($returnVar === 0 && file_exists($filename)) {
-            return $filename;
-        } else {
-            throw new Exception('Backup yaratishda xatolik');
-        }
-
-    } catch (Exception $e) {
-        error_log('Backup error: ' . $e->getMessage());
-        return false;
-    }
-}
-
-// Ma'lumotlar bazasini tozalash (test uchun)
-function cleanupTestData() {
-    if (!defined('DEVELOPMENT') || !DEVELOPMENT) {
-        throw new Exception('Bu funksiya faqat development muhitida ishlaydi');
-    }
-
-    try {
-        beginTransaction();
-
-        // Test ma'lumotlarni o'chirish
-        executeQuery("DELETE FROM system_logs WHERE created_at < DATE_SUB(NOW(), INTERVAL 1 DAY)");
-        executeQuery("DELETE FROM notifications WHERE status = 'yuborildi' AND created_at < DATE_SUB(NOW(), INTERVAL 7 DAY)");
-
-        commitTransaction();
-        return true;
-
-    } catch (Exception $e) {
-        rollbackTransaction();
-        throw $e;
     }
 }
 
