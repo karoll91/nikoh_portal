@@ -70,7 +70,7 @@ $news = [
                     </div>
                 </div>
                 <div class="col-lg-6 text-center">
-                    <img src="assets/images/hero-illustration.png" alt="Nikoh Portali" class="img-fluid" style="max-height: 400px;">
+                    <img src="assets/images/home_img.png" alt="Nikoh Portali" class="img-fluid" style="max-height: 400px;">
                 </div>
             </div>
         </div>
